@@ -1,0 +1,8 @@
+# 비밀 값이 든 로컬 파일은 올리지 않는다
+.env*
+!.env.example
+# 빌드에 필요 없는 것
+test-results
+playwright-report
+supabase/.temp
+.claude

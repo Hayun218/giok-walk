@@ -1,0 +1,145 @@
+/*
+ * 기억산책 디자인 토큰
+ * ─────────────────────────────────────────────
+ * 색·서체·간격·반경은 전부 여기서만 정한다.
+ * BI 확정(11/18경) 후에는 이 파일의 값만 바꾸면 전체에 반영된다.
+ * 현재 값의 출처: 기억산책_BI시스템_초안.html (2026-11-14, 초안)
+ *
+ * 구조
+ *  1) :root      원시 팔레트, 구슬 색, 간격, 그림자·움직임
+ *  2) @theme     역할 토큰(색·서체·글자 크기·반경). :root CSS 변수로도 나오고
+ *                Tailwind 유틸리티(bg-bg, text-text-muted, text-accent, rounded-lg, font-title)가 같은 값을 쓴다.
+ * 컴포넌트에서는 원시 색(--palette-*)이 아니라 역할 토큰(--color-*)을 쓴다.
+ */
+
+:root {
+  /* ── 원시 팔레트 (BI 초안) ───────────────────── */
+  --palette-ink: #1b2440;
+  --palette-ink-muted: #5b637a;
+  --palette-paper: #f6f2e9;
+  --palette-paper-deep: #efeadf;
+  --palette-white: #ffffff;
+  --palette-line: #dad4c6;
+  --palette-coral: #ff6b5e;
+  --palette-sky: #5bb8f5;
+  --palette-sunset: #ff7a66;
+  /* 다크 모드용 (임시) — 잉크를 바탕으로 한 밤 색 */
+  --palette-night: #11162a;
+  --palette-night-raised: #1b2440;
+  --palette-night-sunken: #0b0f1e;
+  --palette-night-line: #2e3858;
+  --palette-paper-muted: #aab0c4;
+  --palette-ember: #ff9b73;
+
+  /* ── 브랜드 구슬 (노을 → 바다) ───────────────── */
+  --orb-brand-from: var(--palette-sunset);
+  --orb-brand-to: var(--palette-sky);
+
+  /* ── 감정 구슬: 색 고르기 = 감정 고르기 ─────────
+   * src/lib/emotions.ts 의 id 와 짝. */
+  --orb-joy-from: #ffd66b;
+  --orb-joy-to: #ff9a5a;
+  --orb-love-from: #ff8fa3;
+  --orb-love-to: #ff6b5e;
+  --orb-calm-from: #8fe0d0;
+  --orb-calm-to: #5bb8f5;
+  --orb-longing-from: #c9b8ff;
+  --orb-longing-to: #6f8be8;
+  /* 아래 둘은 BI 초안에 없는 임시값 */
+  --orb-flutter-from: #ffc8e0;
+  --orb-flutter-to: #f28ab8;
+  --orb-thanks-from: #c8ec9a;
+  --orb-thanks-to: #5fbf8f;
+
+  /* ── 글줄 ───────────────────────────────────── */
+  --leading-body: 1.6;
+  --leading-title: 1.3;
+  --tracking-date: 0.12em;
+
+  /* ── 간격 (4px 단위) ─────────────────────────── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --page-gutter: var(--space-5);
+  --page-max-width: 30rem; /* 모바일 우선 */
+
+  /* ── 그림자·움직임 ───────────────────────────── */
+  --shadow-card: 0 1px 2px color-mix(in srgb, var(--palette-ink) 6%, transparent), 0 4px 16px color-mix(in srgb, var(--palette-ink) 6%, transparent);
+  --shadow-orb: 0 6px 24px color-mix(in srgb, var(--palette-ink) 18%, transparent);
+  --duration-fast: 150ms;
+  --duration-slow: 400ms;
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-slow: 0ms;
+  }
+}
+
+@theme {
+  /* ── 색 (역할) ──────────────────────────────── */
+  --color-bg: var(--palette-paper);
+  --color-surface: var(--palette-white);
+  --color-surface-sunken: var(--palette-paper-deep);
+  --color-text: var(--palette-ink);
+  --color-text-muted: var(--palette-ink-muted);
+  --color-border: var(--palette-line);
+  --color-primary: var(--palette-ink); /* 주요 버튼: 잉크 바탕 */
+  --color-primary-contrast: var(--palette-paper);
+  --color-accent: var(--palette-coral); /* 포인트 색 1개 */
+  --color-accent-contrast: var(--palette-ink); /* 흰 글자는 코랄 위에서 2.8:1 로 부족 */
+  --color-danger: #c2410c;
+  --color-camera-bg: var(--palette-ink); /* 카메라·어두운 배경 */
+  --color-on-camera: var(--palette-paper);
+
+  /* ── 서체 ───────────────────────────────────── */
+  /* --font-serif-src / --font-sans-src 는 layout.tsx 의 next/font 가 채운다 */
+  --font-title: var(--font-serif-src), "Noto Serif KR", serif; /* 제목: 명조 */
+  --font-body: var(--font-sans-src), "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; /* UI: 고딕 */
+  --font-date: ui-monospace, "SFMono-Regular", monospace; /* 소인 날짜 */
+
+  /* ── 글자 크기 ──────────────────────────────── */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+
+  /* ── 반경 ───────────────────────────────────── */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+  --radius-full: 9999px; /* 구슬·원형 버튼 */
+}
+
+/*
+ * ── 다크 모드 ─────────────────────────────────
+ * 휴대폰 설정을 따른다. 역할 토큰 값만 바꾸므로 화면 코드는 그대로다.
+ * (BI 확정 때 다크 값도 함께 정한다. 대비는 tests/unit/design-tokens.test.ts 가 검사)
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: var(--palette-night);
+    --color-surface: var(--palette-night-raised);
+    --color-surface-sunken: var(--palette-night-sunken);
+    --color-text: var(--palette-paper);
+    --color-text-muted: var(--palette-paper-muted);
+    --color-border: var(--palette-night-line);
+    --color-primary: var(--palette-paper); /* 밤에는 종이색 버튼 */
+    --color-primary-contrast: var(--palette-ink);
+    --color-accent: var(--palette-coral);
+    --color-accent-contrast: var(--palette-ink);
+    --color-danger: var(--palette-ember);
+    --color-camera-bg: var(--palette-night-sunken);
+    --color-on-camera: var(--palette-paper);
+  }
+}
