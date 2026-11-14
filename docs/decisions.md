@@ -140,5 +140,6 @@
 | 익명 가입 한도 | IP당 시간당 1000 (기본 30). 축제장 와이파이·통신사 공용 IP 로 여러 방문객이 한 IP 를 쓰기 때문 |
 | 서버 비밀 키 | CLI 가 새 형식 secret 키를 가려서 보여 주므로 service_role 키를 `SUPABASE_SECRET_KEY` 로 사용. 나중에 대시보드에서 secret 키로 바꿔도 된다 |
 | 비밀 값 위치 | Vercel 환경 변수(민감) + 이 맥의 `.env.deploy.local`(DB 비밀번호, 운영자 코드). git·배포 파일에서 제외(`.gitignore`, `.vercelignore`) |
-| 배포 명령 | `npx vercel deploy --prod` · DB 변경은 `supabase db push` |
+| 저장소 | https://github.com/Hayun218/giok-walk (공개). Vercel 과 연결 — `main` 에 푸시하면 운영 배포, 다른 브랜치는 미리보기 배포 |
+| 배포 명령 | 보통은 `git push` 로 자동. 수동은 `npx vercel deploy --prod` · DB 변경은 `supabase db push` (자동 아님) |
 | 배포본 점검 | `E2E_BASE_URL=https://giok-walk.vercel.app E2E_PLACE=demo pnpm test:e2e -g "QR 로"` (테스트 마음은 끝나고 지운다) |

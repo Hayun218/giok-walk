@@ -30,7 +30,8 @@ pnpm dev             # http://localhost:3000
 ## 배포
 
 - 주소: https://giok-walk.vercel.app · 데모 QR: `design/qr/demo-qr.png`
-- 코드 배포: `npx vercel deploy --prod` · DB 변경: `supabase db push` · 인증 설정: `supabase config push`
+- 코드 배포: GitHub `main` 에 푸시하면 Vercel 이 자동 배포 (수동: `npx vercel deploy --prod`)
+- DB 변경: `supabase db push` · 인증 설정: `supabase config push` (이 둘은 자동이 아니다)
 - 운영자 코드·DB 비밀번호: 이 맥의 `.env.deploy.local` (git·배포에 올리지 않음)
 - 자세한 값은 docs/decisions.md 8절
 
