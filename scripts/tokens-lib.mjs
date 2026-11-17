@@ -5,7 +5,7 @@
  */
 import { readFileSync } from "node:fs";
 
-const DARK_BLOCK = /@media \(prefers-color-scheme: dark\)\s*\{\s*:root\s*\{([\s\S]*?)\}\s*\}/;
+const DARK_BLOCK = /:root\[data-theme="dark"\]\s*\{([\s\S]*?)\}/;
 
 function parseVars(text, into, overwrite) {
   for (const m of text.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)) {

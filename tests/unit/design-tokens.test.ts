@@ -62,7 +62,7 @@ describe.each(["light", "dark"])("글자 대비 — %s 모드 (컬러 확정 때
     ["--color-text", "--color-surface"],
     ["--color-accent-contrast", "--color-accent"],
     ["--color-primary-contrast", "--color-primary"],
-    ["--color-on-camera", "--color-camera-bg"],
+    ["--color-on-scene", "--color-scene-bg"],
   ];
   it.each(pairs)("%s 위 %s 가 4.5:1 이상", (fg, bg) => {
     expect(contrast(t(fg), t(bg))).toBeGreaterThanOrEqual(4.5);

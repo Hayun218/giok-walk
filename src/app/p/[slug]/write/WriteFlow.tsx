@@ -7,6 +7,7 @@ import { EmotionPicker } from "@/components/EmotionPicker";
 import { LetterCard } from "@/components/LetterCard";
 import { Orb } from "@/components/Orb";
 import { CameraConsent } from "@/components/scene/CameraConsent";
+import { sceneChip } from "@/components/scene/chip";
 import type { Aim } from "@/components/scene/PlaceScene";
 import { useCamera } from "@/components/scene/useCamera";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -121,7 +122,7 @@ export function WriteFlow({ place }: { place: Place }) {
   if (step === "place" && emotion) {
     const ready = camera.choice !== "undecided";
     return (
-      <div className="fixed inset-0 flex flex-col bg-camera-bg text-on-camera">
+      <div className="fixed inset-0 flex flex-col bg-scene-bg text-on-scene">
         {ready && (
           <PlaceScene
             memories={[]}
@@ -133,13 +134,13 @@ export function WriteFlow({ place }: { place: Place }) {
           />
         )}
         <div className="relative z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1rem)]">
-          <button type="button" onClick={() => setStep("visibility")} className="py-2 text-sm">
+          <button type="button" onClick={() => setStep("visibility")} className={`text-sm ${sceneChip}`}>
             ← 돌아가기
           </button>
         </div>
         <div className="relative z-10 mt-auto flex flex-col gap-3 px-5 pb-[max(env(safe-area-inset-bottom),1.5rem)]">
           {ready && (
-            <p className="text-center text-sm drop-shadow">
+            <p className={`self-center text-center text-sm ${sceneChip}`}>
               {camera.choice === "camera" ? "마음을 두고 싶은 곳을 비춰 주세요" : "화면을 끌어서 둘 곳을 골라 주세요"}
               {camera.denied && " (카메라를 쓸 수 없어서 그림 위에 둘게요)"}
             </p>

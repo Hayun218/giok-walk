@@ -18,7 +18,8 @@ function withAlpha(hex: string, alpha: number) {
 const cache = new Map<string, CanvasTexture>();
 
 export function objectTexture(kind: ObjectKind, emotion: EmotionId | "brand", options: { mine?: boolean; ghost?: boolean } = {}) {
-  const key = `${kind}:${emotion}:${options.mine ? 1 : 0}:${options.ghost ? 1 : 0}`;
+  const theme = document.documentElement.dataset.theme ?? "light";
+  const key = `${theme}:${kind}:${emotion}:${options.mine ? 1 : 0}:${options.ghost ? 1 : 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -66,6 +67,16 @@ export function objectTexture(kind: ObjectKind, emotion: EmotionId | "brand", op
     ctx.fill();
   } else {
     const r = 70;
+    if (theme === "light") {
+      // 밝은 배경에서는 구슬 아래 옅은 그림자로 떠 있는 느낌을 준다
+      const shadow = ctx.createRadialGradient(c, c + r * 0.55, r * 0.2, c, c + r * 0.55, r * 1.05);
+      shadow.addColorStop(0, withAlpha(ink, 0.22));
+      shadow.addColorStop(1, withAlpha(ink, 0));
+      ctx.fillStyle = shadow;
+      ctx.beginPath();
+      ctx.ellipse(c, c + r * 0.55, r * 1.05, r * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(c, c, r, 0, Math.PI * 2);
@@ -79,7 +90,7 @@ export function objectTexture(kind: ObjectKind, emotion: EmotionId | "brand", op
   }
 
   if (options.mine) {
-    ctx.strokeStyle = paper;
+    ctx.strokeStyle = cssVar("--color-scene-ring");
     ctx.lineWidth = 6;
     ctx.setLineDash([10, 10]);
     ctx.beginPath();

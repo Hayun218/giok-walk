@@ -40,7 +40,7 @@ pnpm dev             # http://localhost:3000
 ```bash
 pnpm test            # 단위 테스트
 pnpm test:db         # DB 규칙 테스트 (로컬 Supabase 필요)
-pnpm test:e2e        # 핵심 흐름 테스트 (iPhone·Android 에뮬레이션, 테스트 장소 /p/e2e 사용)
+pnpm test:e2e        # 핵심 흐름·화면 크기·밝기 테스트 (포트 3210 에 개발 서버를 띄운다. 이미 pnpm dev 가 떠 있으면 먼저 끈다)
 pnpm typecheck && pnpm lint
 ```
 

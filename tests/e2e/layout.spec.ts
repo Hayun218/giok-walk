@@ -19,7 +19,7 @@ test.beforeEach(({}, info) => {
 for (const scheme of ["light", "dark"] as const) {
   for (const size of SIZES) {
     test(`${scheme} · ${size.name}: 가로로 넘치지 않는다`, async ({ page }) => {
-      await page.emulateMedia({ colorScheme: scheme });
+      await page.addInitScript((t) => localStorage.setItem("giok-walk:theme", t), scheme);
       await page.setViewportSize({ width: size.width, height: size.height });
       for (const path of PAGES) {
         await page.goto(path);
@@ -31,13 +31,35 @@ for (const scheme of ["light", "dark"] as const) {
   }
 }
 
-test("다크 모드에서는 밤 색 바탕, 라이트 모드에서는 종이색 바탕", async ({ page }) => {
-  const bg = async () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  await page.emulateMedia({ colorScheme: "light" });
-  await page.goto("/");
-  expect(await bg()).toBe("rgb(246, 242, 233)");
+const PAPER = "rgb(246, 242, 233)";
+const NIGHT = "rgb(17, 22, 42)";
+const bgOf = (page: import("@playwright/test").Page) =>
+  page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+
+test("기본은 라이트: 휴대폰이 다크 모드여도 종이색 바탕", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
-  expect(await bg()).toBe("rgb(17, 22, 42)");
+  await page.goto("/");
+  expect(await bgOf(page)).toBe(PAPER);
+});
+
+test("내 기억에서 어둡게를 고르면 밤 색, 다른 화면에도 이어진다", async ({ page }) => {
+  await page.goto("/me");
+  await page.getByRole("radio", { name: "어둡게" }).click();
+  expect(await bgOf(page)).toBe(NIGHT);
+  await page.goto("/");
+  expect(await bgOf(page)).toBe(NIGHT);
+  await page.goto("/me");
+  await page.getByRole("radio", { name: "밝게" }).click();
+  expect(await bgOf(page)).toBe(PAPER);
+});
+
+test("휴대폰 설정을 고르면 휴대폰의 라이트·다크를 따른다", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("giok-walk:theme", "system"));
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+  expect(await bgOf(page)).toBe(NIGHT);
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect.poll(() => bgOf(page)).toBe(PAPER);
 });
 
 test("쓰기 화면의 다음 버튼은 작은 폰에서도 스크롤 없이 보인다", async ({ page }) => {

@@ -7,6 +7,7 @@ import { MemorySheet } from "@/components/MemorySheet";
 import { Orb } from "@/components/Orb";
 import { CameraConsent } from "@/components/scene/CameraConsent";
 import { useCamera } from "@/components/scene/useCamera";
+import { sceneChip } from "@/components/scene/chip";
 import { ButtonLink } from "@/components/ui/Button";
 import { emotionLabel, type EmotionId } from "@/lib/emotions";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -65,7 +66,7 @@ export function PlaceView({ place }: { place: Place }) {
       aria-label="보기 방식"
       className={`flex rounded-full p-1 text-sm ${
         tab === "around"
-          ? "bg-[color-mix(in_srgb,var(--color-on-camera)_18%,transparent)]"
+          ? "bg-scene-chip backdrop-blur-md"
           : "bg-[color-mix(in_srgb,var(--color-text)_8%,transparent)]"
       }`}
     >
@@ -97,7 +98,7 @@ export function PlaceView({ place }: { place: Place }) {
   if (tab === "around") {
     const ready = camera.choice !== "undecided";
     return (
-      <div className="fixed inset-0 flex flex-col text-on-camera">
+      <div className="fixed inset-0 flex flex-col bg-scene-bg text-on-scene">
         {ready && memories && (
           <PlaceScene
             memories={sceneMemories}
@@ -110,13 +111,17 @@ export function PlaceView({ place }: { place: Place }) {
         )}
         <div className="relative z-10 flex flex-col gap-3 px-5 pt-[max(env(safe-area-inset-top),1rem)]">
           <div className="flex items-center justify-between text-sm">
-            <Link href={`/p/${place.slug}`}>← {place.name}</Link>
-            <span data-testid="view-summary">{summary}</span>
+            <Link href={`/p/${place.slug}`} className={sceneChip}>
+              ← {place.name}
+            </Link>
+            <span data-testid="view-summary" className={sceneChip}>
+              {summary}
+            </span>
           </div>
           {tabs}
         </div>
         {ready && (
-          <p className="relative z-10 mt-auto px-5 pb-[max(env(safe-area-inset-bottom),1.5rem)] text-center text-sm drop-shadow">
+          <p className={`relative z-10 mx-5 mt-auto mb-[max(env(safe-area-inset-bottom),1.5rem)] self-center text-center text-sm ${sceneChip}`}>
             {camera.choice === "camera" ? "휴대폰을 천천히 돌려 보세요. 구슬을 누르면 편지가 열려요." : "화면을 끌어서 둘러보세요. 구슬을 누르면 편지가 열려요."}
           </p>
         )}

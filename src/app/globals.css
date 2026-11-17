@@ -4,8 +4,12 @@
 
 html {
   background: var(--color-bg);
-  color-scheme: light dark; /* 스크롤바·입력창도 다크 모드를 따른다 */
+  color-scheme: light; /* 기본은 라이트 */
   -webkit-text-size-adjust: 100%;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark; /* 스크롤바·입력창도 다크 모드를 따른다 */
 }
 
 /* iOS 는 16px 보다 작은 입력창을 누르면 화면을 확대한다 → 터치 기기에서는 16px 이상 */

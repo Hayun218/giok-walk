@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Orb } from "@/components/Orb";
+import { ThemeSetting } from "@/components/ThemeSetting";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { PageShell } from "@/components/ui/PageShell";
 import type { EmotionId } from "@/lib/emotions";
@@ -74,7 +75,10 @@ export function MyMemories() {
         </section>
       ))}
 
-      {ready && <AccountBox />}
+      <div className="mt-auto flex flex-col gap-6">
+        <ThemeSetting />
+        {ready && <AccountBox />}
+      </div>
     </PageShell>
   );
 }

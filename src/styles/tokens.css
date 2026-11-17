@@ -97,8 +97,14 @@
   --color-accent: var(--palette-coral); /* 포인트 색 1개 */
   --color-accent-contrast: var(--palette-ink); /* 흰 글자는 코랄 위에서 2.8:1 로 부족 */
   --color-danger: #c2410c;
-  --color-camera-bg: var(--palette-ink); /* 카메라·어두운 배경 */
-  --color-on-camera: var(--palette-paper);
+
+  /* 장소 화면(카메라·그림 위에 구슬이 떠 있는 화면) */
+  --color-scene-bg: var(--palette-paper);
+  --color-scene-sky: color-mix(in srgb, var(--palette-sky) 30%, var(--palette-white)); /* 그림 배경: 하늘 */
+  --color-scene-ground: color-mix(in srgb, var(--palette-sunset) 16%, var(--palette-paper)); /* 그림 배경: 땅 */
+  --color-on-scene: var(--palette-ink); /* 장소 화면 위 글자 */
+  --color-scene-chip: color-mix(in srgb, var(--palette-paper) 84%, transparent); /* 카메라 영상 위 글자 받침 */
+  --color-scene-ring: var(--palette-ink); /* 내가 남긴 구슬 테두리 */
 
   /* ── 서체 ───────────────────────────────────── */
   /* --font-serif-src / --font-sans-src 는 layout.tsx 의 next/font 가 채운다 */
@@ -123,23 +129,26 @@
 
 /*
  * ── 다크 모드 ─────────────────────────────────
- * 휴대폰 설정을 따른다. 역할 토큰 값만 바꾸므로 화면 코드는 그대로다.
- * (BI 확정 때 다크 값도 함께 정한다. 대비는 tests/unit/design-tokens.test.ts 가 검사)
+ * 기본은 라이트. <html data-theme="dark"> 일 때만 켜진다.
+ * 방문객이 "내 기억 → 화면 밝기"에서 고르고, "휴대폰 설정대로"를 고르면 휴대폰 설정을 따른다 (src/lib/theme.ts).
+ * 역할 토큰 값만 바꾸므로 화면 코드는 그대로다. 대비는 tests/unit/design-tokens.test.ts 가 검사.
  */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: var(--palette-night);
-    --color-surface: var(--palette-night-raised);
-    --color-surface-sunken: var(--palette-night-sunken);
-    --color-text: var(--palette-paper);
-    --color-text-muted: var(--palette-paper-muted);
-    --color-border: var(--palette-night-line);
-    --color-primary: var(--palette-paper); /* 밤에는 종이색 버튼 */
-    --color-primary-contrast: var(--palette-ink);
-    --color-accent: var(--palette-coral);
-    --color-accent-contrast: var(--palette-ink);
-    --color-danger: var(--palette-ember);
-    --color-camera-bg: var(--palette-night-sunken);
-    --color-on-camera: var(--palette-paper);
-  }
+:root[data-theme="dark"] {
+  --color-bg: var(--palette-night);
+  --color-surface: var(--palette-night-raised);
+  --color-surface-sunken: var(--palette-night-sunken);
+  --color-text: var(--palette-paper);
+  --color-text-muted: var(--palette-paper-muted);
+  --color-border: var(--palette-night-line);
+  --color-primary: var(--palette-paper); /* 밤에는 종이색 버튼 */
+  --color-primary-contrast: var(--palette-ink);
+  --color-accent: var(--palette-coral);
+  --color-accent-contrast: var(--palette-ink);
+  --color-danger: var(--palette-ember);
+  --color-scene-bg: var(--palette-night-sunken);
+  --color-scene-sky: color-mix(in srgb, var(--palette-sky) 35%, var(--palette-night-sunken));
+  --color-scene-ground: color-mix(in srgb, var(--palette-sunset) 30%, var(--palette-night-sunken));
+  --color-on-scene: var(--palette-paper);
+  --color-scene-chip: color-mix(in srgb, var(--palette-night-sunken) 70%, transparent);
+  --color-scene-ring: var(--palette-paper);
 }

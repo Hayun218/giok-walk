@@ -17,6 +17,7 @@ import type { EmotionId } from "@/lib/emotions";
 import { aimFromDirection, toPosition } from "@/lib/placement";
 import type { ObjectKind } from "@/lib/types";
 import { objectTexture } from "./orbTexture";
+import { sceneChip } from "./chip";
 import { screenAngle, watchOrientation, type Orientation } from "./orientation";
 
 export type SceneMemory = {
@@ -269,27 +270,27 @@ export default function PlaceScene({
   }, [mode, objectKind, ghostEmotion, aimRef, wide]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-camera-bg" data-testid="place-scene" data-sensor={usingSensor ? "on" : "off"}>
+    <div className="absolute inset-0 overflow-hidden bg-scene-bg" data-testid="place-scene" data-sensor={usingSensor ? "on" : "off"}>
       {cameraStream ? (
         <video ref={videoRef} className="absolute inset-0 h-full w-full object-cover" muted playsInline autoPlay />
       ) : (
-        // 카메라 없이 볼 때의 배경: 저녁 하늘과 수평선
+        // 카메라 없이 볼 때의 배경: 하늘과 수평선 (라이트·다크 모두 토큰 값)
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, var(--color-camera-bg) 0%, color-mix(in srgb, var(--orb-brand-to) 35%, var(--color-camera-bg)) 55%, color-mix(in srgb, var(--orb-brand-from) 30%, var(--color-camera-bg)) 56%, var(--color-camera-bg) 100%)",
+              "linear-gradient(180deg, var(--color-scene-bg) 0%, var(--color-scene-sky) 55%, var(--color-scene-ground) 56%, var(--color-scene-bg) 100%)",
           }}
         />
       )}
       <div ref={mountRef} className="absolute inset-0" />
       {mode === "view" && offscreen.left > 0 && (
-        <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 rounded-full bg-[color-mix(in_srgb,var(--color-camera-bg)_70%,transparent)] px-3 py-2 text-sm text-on-camera" data-testid="hint-left">
+        <span className={`pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-on-scene ${sceneChip}`} data-testid="hint-left">
           ← {offscreen.left}
         </span>
       )}
       {mode === "view" && offscreen.right > 0 && (
-        <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 rounded-full bg-[color-mix(in_srgb,var(--color-camera-bg)_70%,transparent)] px-3 py-2 text-sm text-on-camera" data-testid="hint-right">
+        <span className={`pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-on-scene ${sceneChip}`} data-testid="hint-right">
           {offscreen.right} →
         </span>
       )}

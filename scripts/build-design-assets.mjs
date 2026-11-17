@@ -150,9 +150,10 @@ const colW = (W - PAD * 2) / 3;
 roles.forEach((r, i) => {
   const cx = PAD + (i % 3) * colW;
   const cy = y + Math.floor(i / 3) * 52;
-  parts.push(`<rect x="${cx}" y="${cy}" width="36" height="36" rx="8" fill="${r.value}" stroke="${LINE}"/>`);
+  const sc = solveColor(r.value);
+  parts.push(`<rect x="${cx}" y="${cy}" width="36" height="36" rx="8" fill="${sc.hex}" fill-opacity="${sc.alpha}" stroke="${LINE}"/>`);
   parts.push(text(cx + 50, cy + 16, `color-${r.name}`, { size: 14, weight: 500 }));
-  parts.push(text(cx + 50, cy + 34, `${r.ref.startsWith("var(") ? r.ref.replace(/var\(--|\)/g, "") + "  " : ""}${r.value.toUpperCase()}`, { size: 12, font: FONT_DATE, fill: MUTED }));
+  parts.push(text(cx + 50, cy + 34, `${r.ref.startsWith("var(") ? r.ref.replace(/var\(--|\)/g, "") + "  " : ""}${colorLabel(sc)}`, { size: 12, font: FONT_DATE, fill: MUTED }));
 });
 y += Math.ceil(roles.length / 3) * 52 + 10;
 
@@ -232,29 +233,73 @@ parts.push(
 parts.push(text(PAD + 1010, y + 380, "엽서 카드 = 오브젝트를 열면 보이는 편지", { size: 14, weight: 500, anchor: "middle" }));
 y += 420;
 
-// 07 카메라 화면 위
-section("07", "카메라 화면 위 (어두운 배경)", "구슬이 가장 빛나 보이는 조건. 글자는 종이색.");
-parts.push(`<rect x="${PAD}" y="${y}" width="${W - PAD * 2}" height="200" rx="20" fill="${t("--color-camera-bg")}"/>`);
-emotions.forEach((e, i) => {
-  const cx = PAD + 120 + i * 190;
-  const cy = y + 90 + (i % 2 ? -24 : 18);
-  parts.push(orb(cx, cy, 30 + (i % 3) * 8, `g-${e.id}`));
-});
-parts.push(text(PAD + 32, y + 176, "이 자리에 남겨진 마음 12개", { size: 15, fill: t("--color-on-camera") }));
-y += 240;
+// 07 장소 화면 (라이트 기본 · 다크)
+// color-mix 토큰은 SVG·피그마가 못 읽으므로 hex 로 풀어서 그린다
+function colorLabel(c) {
+  return c.alpha < 1 ? `${c.hex.toUpperCase()} ${Math.round(c.alpha * 100)}%` : c.hex.toUpperCase();
+}
+function hex8(c) {
+  return c.alpha < 1 ? c.hex + Math.round(c.alpha * 255).toString(16).padStart(2, "0") : c.hex;
+}
+function hexToRgb(h) {
+  const n = parseInt(h.replace("#", "").slice(0, 6), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function solveColor(v) {
+  v = v.trim();
+  const m = v.match(/^color-mix\(in srgb,\s*(.+?)\s+(\d+)%,\s*(.+)\)$/);
+  if (!m) return { hex: v, alpha: 1 };
+  const a = solveColor(m[1]);
+  const pct = Number(m[2]) / 100;
+  if (m[3].trim() === "transparent") return { hex: a.hex, alpha: pct };
+  const b = solveColor(m[3]);
+  const [ra, ga, ba] = hexToRgb(a.hex);
+  const [rb, gb, bb] = hexToRgb(b.hex);
+  const mix = (x, y) => Math.round(x * pct + y * (1 - pct)).toString(16).padStart(2, "0");
+  return { hex: `#${mix(ra, rb)}${mix(ga, gb)}${mix(ba, bb)}`, alpha: 1 };
+}
+section("07", "장소 화면", "카메라를 켜면 영상 위에, 끄면 하늘·땅 그림 위에 구슬이 뜬다. 기본은 라이트, 오른쪽은 다크.");
+{
+  const panelW = (W - PAD * 2 - 24) / 2;
+  const panelH = 260;
+  [["light", tokenSet], ["dark", dark]].forEach(([name, set], p) => {
+    const x0 = PAD + p * (panelW + 24);
+    const c = (k) => solveColor(set.t(k));
+    parts.push(
+      `<defs><linearGradient id="scene-${name}" x1="0" y1="0" x2="0" y2="1">` +
+        `<stop offset="0" stop-color="${c("--color-scene-bg").hex}"/><stop offset=".55" stop-color="${c("--color-scene-sky").hex}"/>` +
+        `<stop offset=".56" stop-color="${c("--color-scene-ground").hex}"/><stop offset="1" stop-color="${c("--color-scene-bg").hex}"/>` +
+        `</linearGradient></defs>`,
+    );
+    parts.push(`<rect x="${x0}" y="${y}" width="${panelW}" height="${panelH}" rx="20" fill="url(#scene-${name})" stroke="${LINE}"/>`);
+    emotions.forEach((e, i) => {
+      const cx = x0 + 70 + i * ((panelW - 140) / (emotions.length - 1));
+      const cy = y + 110 + (i % 2 ? -26 : 16);
+      parts.push(orb(cx, cy, 22 + (i % 3) * 6, `g-${e.id}`));
+    });
+    // 내가 남긴 구슬 테두리
+    const mx = x0 + 70 + 2 * ((panelW - 140) / (emotions.length - 1));
+    parts.push(`<circle cx="${mx}" cy="${y + 126}" r="44" fill="none" stroke="${c("--color-scene-ring").hex}" stroke-width="2" stroke-dasharray="6 6"/>`);
+    const chip = c("--color-scene-chip");
+    parts.push(`<rect x="${x0 + 24}" y="${y + panelH - 56}" width="250" height="34" rx="17" fill="${chip.hex}" fill-opacity="${chip.alpha}"/>`);
+    parts.push(text(x0 + 40, y + panelH - 33, "이 자리에 남겨진 마음 12개", { size: 14, fill: c("--color-on-scene").hex }));
+    parts.push(text(x0 + panelW - 24, y + 32, name === "light" ? "라이트 (기본)" : "다크", { size: 13, font: FONT_DATE, anchor: "end", fill: c("--color-on-scene").hex }));
+  });
+  y += panelH + 20;
+}
 
 // 08 다크 모드
-section("08", "다크 모드", "휴대폰 설정을 따른다. 역할 토큰 값만 바뀌고 화면 코드는 같다. (임시값)");
+section("08", "다크 모드", "기본은 라이트. 내 기억 → 화면 밝기에서 어둡게·휴대폰 설정대로를 고르면 켜진다. 역할 토큰 값만 바뀐다. (임시값)");
 {
-  const panelH = 320;
+  const panelH = 32 + Math.ceil(roles.length / 3) * 52 + 4 + 48 + 32;
   parts.push(`<rect x="${PAD}" y="${y}" width="${W - PAD * 2}" height="${panelH}" rx="20" fill="${dark.t("--color-bg")}"/>`);
   roles.forEach((r, i) => {
     const cx = PAD + 32 + (i % 3) * ((W - PAD * 2 - 64) / 3);
     const cy = y + 32 + Math.floor(i / 3) * 52;
-    const v = dark.t(`--color-${r.name}`);
-    parts.push(`<rect x="${cx}" y="${cy}" width="36" height="36" rx="8" fill="${v}" stroke="${dark.t("--color-border")}"/>`);
+    const v = solveColor(dark.t(`--color-${r.name}`));
+    parts.push(`<rect x="${cx}" y="${cy}" width="36" height="36" rx="8" fill="${v.hex}" fill-opacity="${v.alpha}" stroke="${dark.t("--color-border")}"/>`);
     parts.push(text(cx + 50, cy + 16, `color-${r.name}`, { size: 14, weight: 500, fill: dark.t("--color-text") }));
-    parts.push(text(cx + 50, cy + 34, v.toUpperCase(), { size: 12, font: FONT_DATE, fill: dark.t("--color-text-muted") }));
+    parts.push(text(cx + 50, cy + 34, colorLabel(v), { size: 12, font: FONT_DATE, fill: dark.t("--color-text-muted") }));
   });
   const by = y + 32 + Math.ceil(roles.length / 3) * 52 + 4;
   parts.push(`<rect x="${PAD + 32}" y="${by}" width="220" height="48" rx="24" fill="${dark.t("--color-primary")}"/>`);
@@ -288,8 +333,8 @@ writeFileSync(
 const tokens = {
   color: {
     palette: Object.fromEntries(palette.map((p) => [p.name, { $type: "color", $value: p.value }])),
-    role: Object.fromEntries(roles.map((r) => [r.name, { $type: "color", $value: r.value }])),
-    roleDark: Object.fromEntries(roles.map((r) => [r.name, { $type: "color", $value: dark.t(`--color-${r.name}`) }])),
+    role: Object.fromEntries(roles.map((r) => [r.name, { $type: "color", $value: hex8(solveColor(r.value)) }])),
+    roleDark: Object.fromEntries(roles.map((r) => [r.name, { $type: "color", $value: hex8(solveColor(dark.t(`--color-${r.name}`))) }])),
     orb: Object.fromEntries(
       [{ id: "brand", label: "브랜드" }, ...emotions].map((e) => [
         e.id,

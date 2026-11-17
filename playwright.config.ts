@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// 테스트 전용 포트 (3000 은 다른 프로젝트가 쓰고 있을 수 있다)
+const PORT = 3210;
+
 // 모바일 우선: iPhone(WebKit)과 Android(Chromium) 두 기기로 돌린다.
 // 카메라는 Chromium 의 가짜 장치로 대신한다 (3단계부터 사용).
 export default defineConfig({
@@ -10,7 +13,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   use: {
     // 배포본 점검: E2E_BASE_URL=https://giok-walk.vercel.app E2E_PLACE=demo pnpm test:e2e -g "QR 로"
-    baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3000",
+    baseURL: process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`,
     locale: "ko-KR",
     timezoneId: "Asia/Seoul",
     trace: "on-first-retry",
@@ -31,8 +34,8 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-    command: "pnpm dev",
-    url: "http://localhost:3000",
+    command: `pnpm exec next dev --port ${PORT}`,
+    url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
       },
