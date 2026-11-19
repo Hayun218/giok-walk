@@ -1,11 +1,15 @@
 import { expect, test, type Page } from "@playwright/test";
 import { passPresence } from "./helpers";
 
+// 배포본 점검: E2E_BASE_URL=... E2E_PLACE=demo (끝나면 테스트 계정을 지운다)
+const PLACE = process.env.E2E_PLACE ?? "e2e";
+const PLACE_NAME = PLACE === "demo" ? "영일대 산책길" : "테스트 산책길";
+
 /**
  * 가입 없이 다 써 보고 → 엽서 화면에서 "내 엽서 간직하기"로 가입 → 다른 휴대폰에서 로그인하면 그대로 (decisions 2-10)
  */
 async function leaveMemory(page: Page, letter: string) {
-  await page.goto("/p/e2e/write");
+  await page.goto(`/p/${PLACE}/write`);
   await passPresence(page);
   await page.getByRole("radio", { name: "그리움" }).click();
   await page.getByRole("button", { name: "다음" }).click();
@@ -44,7 +48,7 @@ test("가입하면 다른 휴대폰에서도 내 엽서가 그대로 있다", as
   // 2. 다른 휴대폰(새 브라우저)에서 로그인 → 내 기억에 그 엽서가 있다
   const phoneB = await (await browser.newContext()).newPage();
   await login(phoneB, email, password);
-  await expect(phoneB.getByRole("region", { name: "테스트 산책길" })).toContainText(letter.slice(0, 12));
+  await expect(phoneB.getByRole("region", { name: PLACE_NAME })).toContainText(letter.slice(0, 12));
   await expect(phoneB.getByText(/가입되어 있어요/)).toBeVisible();
 });
 
@@ -74,5 +78,5 @@ test("가입한 사람이 새 휴대폰에서 먼저 남기고 나중에 로그�
 
   await login(second, email, password);
   await expect(second.getByRole("status").filter({ hasText: "옮겼어요" })).toContainText("1개");
-  await expect(second.getByRole("region", { name: "테스트 산책길" })).toContainText(letter.slice(0, 10));
+  await expect(second.getByRole("region", { name: PLACE_NAME })).toContainText(letter.slice(0, 10));
 });
