@@ -34,6 +34,10 @@ export function useCamera() {
   }, []);
 
   const usePicture = useCallback(async () => {
+    // 카메라를 켜 둔 채 그림으로 바꾸면 카메라는 끈다
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setStream(null);
     await requestMotionPermission();
     setChoice("picture");
   }, []);

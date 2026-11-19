@@ -87,6 +87,10 @@ export type Database = {
       }
       memories: {
         Row: {
+          anchor_slot: number | null
+          anchor_x: number | null
+          anchor_y: number | null
+          anchor_z: number | null
           author_id: string
           created_at: string
           distance: number
@@ -105,6 +109,10 @@ export type Database = {
           yaw: number
         }
         Insert: {
+          anchor_slot?: number | null
+          anchor_x?: number | null
+          anchor_y?: number | null
+          anchor_z?: number | null
           author_id?: string
           created_at?: string
           distance?: number
@@ -123,6 +131,10 @@ export type Database = {
           yaw: number
         }
         Update: {
+          anchor_slot?: number | null
+          anchor_x?: number | null
+          anchor_y?: number | null
+          anchor_z?: number | null
           author_id?: string
           created_at?: string
           distance?: number
@@ -159,6 +171,8 @@ export type Database = {
       }
       places: {
         Row: {
+          anchor_seq: number
+          anchor_size_m: number
           created_at: string
           created_by: string | null
           description: string | null
@@ -176,6 +190,8 @@ export type Database = {
           venue_name: string | null
         }
         Insert: {
+          anchor_seq?: number
+          anchor_size_m?: number
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -193,6 +209,8 @@ export type Database = {
           venue_name?: string | null
         }
         Update: {
+          anchor_seq?: number
+          anchor_size_m?: number
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -328,6 +346,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      anchor_slot_position: {
+        Args: { n: number }
+        Returns: Record<string, unknown>
+      }
       get_shared_memory: {
         Args: { token: string }
         Returns: {

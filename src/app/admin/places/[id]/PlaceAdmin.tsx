@@ -116,6 +116,7 @@ export function PlaceAdmin({ id }: { id: string }) {
           <a href={qr} download={`giok-walk-${place.slug}.png`} className="text-sm underline underline-offset-4">
             인쇄용 이미지 내려받기
           </a>
+          <AnchorSizeField place={place} onSaved={load} />
         </section>
       )}
 
@@ -167,5 +168,43 @@ function MemoryRow({ m, children }: { m: Memory; children?: React.ReactNode }) {
       </span>
       {children}
     </div>
+  );
+}
+
+/** 인쇄한 QR 크기: 카메라가 포스터까지 거리를 가늠하는 기준 (decisions 3-A) */
+function AnchorSizeField({ place, onSaved }: { place: Place; onSaved: () => void }) {
+  const [cm, setCm] = useState(String(Math.round(place.anchor_size_m * 100)));
+  const [note, setNote] = useState<string | null>(null);
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    const value = Number(cm) / 100;
+    if (!(value >= 0.05 && value <= 2)) return setNote("5~200cm 사이로 넣어 주세요.");
+    const { error } = await supabaseBrowser().from("places").update({ anchor_size_m: value }).eq("id", place.id);
+    setNote(error ? "저장하지 못했어요." : "저장했어요.");
+    if (!error) onSaved();
+  }
+  return (
+    <form onSubmit={save} className="flex w-full flex-col gap-2 rounded-[var(--radius-md)] bg-surface-sunken p-4 text-sm">
+      <label className="flex items-center justify-between gap-3">
+        <span>
+          인쇄한 QR 한 변 길이
+          <span className="block text-xs text-text-muted">구슬이 포스터 둘레 제자리에 뜨도록 실제 크기를 적어 주세요</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <input
+            inputMode="numeric"
+            value={cm}
+            onChange={(e) => setCm(e.target.value.replace(/[^0-9]/g, ""))}
+            className="min-h-10 w-16 rounded-[var(--radius-sm)] border border-border bg-surface px-2 text-right font-date"
+            aria-label="QR 한 변 길이(cm)"
+          />
+          cm
+        </span>
+      </label>
+      <Button type="submit" variant="secondary" className="min-h-10 text-sm">
+        저장
+      </Button>
+      {note && <p className="text-xs text-text-muted">{note}</p>}
+    </form>
   );
 }

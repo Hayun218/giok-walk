@@ -15,8 +15,9 @@
     "db:reset": "supabase db reset",
     "env:local": "./scripts/write-local-env.sh",
     "design:build": "node scripts/build-design-assets.mjs",
-    "db:types": "supabase gen types typescript --local > src/lib/database.types.ts",
-    "db:demo": "node --env-file=.env.local scripts/seed-demo.mjs"
+    "db:types": "supabase gen types typescript --local > src/lib/database.types.ts.tmp && mv src/lib/database.types.ts.tmp src/lib/database.types.ts || rm -f src/lib/database.types.ts.tmp",
+    "db:demo": "node --env-file=.env.local scripts/seed-demo.mjs",
+    "postinstall": "node scripts/copy-wasm.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -26,7 +27,8 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
-    "three": "^0.187.0"
+    "three": "^0.187.0",
+    "zxing-wasm": "^3.1.7"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",

@@ -9,6 +9,7 @@ import { CameraConsent } from "@/components/scene/CameraConsent";
 import { useCamera } from "@/components/scene/useCamera";
 import { sceneChip } from "@/components/scene/chip";
 import { ButtonLink } from "@/components/ui/Button";
+import { anchorSlot } from "@/lib/anchor";
 import { emotionLabel, type EmotionId } from "@/lib/emotions";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { recipientLabel, stampDate, type Memory, type Place } from "@/lib/types";
@@ -49,12 +50,14 @@ export function PlaceView({ place }: { place: Place }) {
   const mineCount = useMemo(() => memories?.filter((m) => m.author_id === userId).length ?? 0, [memories, userId]);
   const sceneMemories = useMemo(
     () =>
-      (memories ?? []).map((m) => ({
+      (memories ?? []).map((m, i) => ({
         id: m.id,
         emotion: m.emotion as EmotionId,
-        yaw: m.yaw,
-        pitch: m.pitch,
-        distance: m.distance,
+        // 포스터 기준 자리 (서버가 배정). 혹시 없으면 순서대로 자리를 만든다
+        anchor:
+          m.anchor_x != null && m.anchor_y != null && m.anchor_z != null
+            ? { x: m.anchor_x, y: m.anchor_y, z: m.anchor_z }
+            : anchorSlot(m.anchor_slot ?? i),
         mine: m.author_id === userId,
       })),
     [memories, userId],
@@ -104,9 +107,12 @@ export function PlaceView({ place }: { place: Place }) {
             memories={sceneMemories}
             objectKind={place.object_kind}
             mode="view"
-            cameraStream={camera.stream}
-            initialYaw={(memories?.find((m) => m.author_id === userId) ?? memories?.[0])?.yaw ?? 0}
+            cameraStream={camera.choice === "camera" ? camera.stream : null}
+            placeSlug={place.slug}
+            placeName={place.name}
+            anchorSize={place.anchor_size_m}
             onSelect={(id) => setSelected(memories?.find((m) => m.id === id) ?? null)}
+            onUsePicture={camera.usePicture}
           />
         )}
         <div className="relative z-10 flex flex-col gap-3 px-5 pt-[max(env(safe-area-inset-top),1rem)]">
@@ -122,7 +128,7 @@ export function PlaceView({ place }: { place: Place }) {
         </div>
         {ready && (
           <p className={`relative z-10 mx-5 mt-auto mb-[max(env(safe-area-inset-bottom),1.5rem)] self-center text-center text-sm ${sceneChip}`}>
-            {camera.choice === "camera" ? "휴대폰을 천천히 돌려 보세요. 구슬을 누르면 편지가 열려요." : "화면을 끌어서 둘러보세요. 구슬을 누르면 편지가 열려요."}
+            {camera.choice === "camera" ? "포스터 둘레를 천천히 둘러보세요. 구슬을 누르면 편지가 열려요." : "화면을 끌어서 둘러보세요. 구슬을 누르면 편지가 열려요."}
           </p>
         )}
         <CameraConsent open={!ready} purpose="view" onCamera={camera.start} onPicture={camera.usePicture} />

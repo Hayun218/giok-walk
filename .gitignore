@@ -54,3 +54,9 @@ next-env.d.ts
 # Supabase CLI 로컬 상태
 supabase/.temp/
 supabase/.branches/
+
+# 설치 때 복사되는 QR 엔진
+/public/wasm/
+
+# 테스트 때 만드는 가짜 카메라 영상
+/tests/fixtures/*.y4m

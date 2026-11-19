@@ -1,7 +1,12 @@
+import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
+import { ensureQrVideo } from "./tests/fixtures/qr-video";
 
 // 테스트 전용 포트 (3000 은 다른 프로젝트가 쓰고 있을 수 있다)
 const PORT = 3210;
+
+// 포스터 고정 테스트용 가짜 카메라: 테스트 장소(/p/e2e)의 QR 을 비추는 영상
+const QR_VIDEO = ensureQrVideo(resolve("tests/fixtures/qr-e2e.y4m"), `http://localhost:${PORT}/p/e2e`);
 
 // 모바일 우선: iPhone(WebKit)과 Android(Chromium) 두 기기로 돌린다.
 // 카메라는 Chromium 의 가짜 장치로 대신한다 (3단계부터 사용).
@@ -19,14 +24,31 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [
-    { name: "iphone", use: { ...devices["iPhone 15"] } },
+    { name: "iphone", testIgnore: /qr-anchor/, use: { ...devices["iPhone 15"] } },
     {
       name: "android",
+      testIgnore: /qr-anchor/,
       use: {
         ...devices["Pixel 7"],
         permissions: ["camera"],
         launchOptions: {
           args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
+        },
+      },
+    },
+    {
+      // 카메라가 QR 포스터를 비추는 상황
+      name: "android-qr",
+      testMatch: /qr-anchor/,
+      use: {
+        ...devices["Pixel 7"],
+        permissions: ["camera"],
+        launchOptions: {
+          args: [
+            "--use-fake-ui-for-media-stream",
+            "--use-fake-device-for-media-stream",
+            `--use-file-for-fake-video-capture=${QR_VIDEO}`,
+          ],
         },
       },
     },

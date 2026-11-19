@@ -13,6 +13,7 @@ import { useCamera } from "@/components/scene/useCamera";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { PageShell } from "@/components/ui/PageShell";
 import type { EmotionId } from "@/lib/emotions";
+import { anchorSlot } from "@/lib/anchor";
 import { preparePhoto } from "@/lib/image";
 import { pickDistance } from "@/lib/placement";
 import { shareMemory } from "@/lib/share";
@@ -129,8 +130,13 @@ export function WriteFlow({ place }: { place: Place }) {
             objectKind={place.object_kind}
             mode="place"
             ghostEmotion={emotion}
-            cameraStream={camera.stream}
+            nextSlot={anchorSlot(place.anchor_seq)}
+            cameraStream={camera.choice === "camera" ? camera.stream : null}
+            placeSlug={place.slug}
+            placeName={place.name}
+            anchorSize={place.anchor_size_m}
             aimRef={aimRef}
+            onUsePicture={camera.usePicture}
           />
         )}
         <div className="relative z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1rem)]">
@@ -141,7 +147,7 @@ export function WriteFlow({ place }: { place: Place }) {
         <div className="relative z-10 mt-auto flex flex-col gap-3 px-5 pb-[max(env(safe-area-inset-bottom),1.5rem)]">
           {ready && (
             <p className={`self-center text-center text-sm ${sceneChip}`}>
-              {camera.choice === "camera" ? "마음을 두고 싶은 곳을 비춰 주세요" : "화면을 끌어서 둘 곳을 골라 주세요"}
+              포스터 앞, 반짝이는 자리에 마음이 놓여요
               {camera.denied && " (카메라를 쓸 수 없어서 그림 위에 둘게요)"}
             </p>
           )}
