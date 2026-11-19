@@ -14,6 +14,7 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { PageShell } from "@/components/ui/PageShell";
 import type { EmotionId } from "@/lib/emotions";
 import { LocationConsent } from "@/components/LocationConsent";
+import { SignupCard } from "@/components/SignupCard";
 import { anchorSlot } from "@/lib/anchor";
 import { bearingDeg, distanceM, formatDistance, isWithin, placeLatLng } from "@/lib/geo";
 import { useLocation } from "@/lib/useLocation";
@@ -30,7 +31,7 @@ import {
   type Recipient,
   type Visibility,
 } from "@/lib/types";
-import { ensureVisitor, logActivity } from "@/lib/visitor";
+import { ensureVisitor, logActivity, useCurrentUser } from "@/lib/visitor";
 
 const PlaceScene = dynamic(() => import("@/components/scene/PlaceScene"), { ssr: false });
 
@@ -52,6 +53,10 @@ export function WriteFlow({ place }: { place: Place }) {
   const [shareNote, setShareNote] = useState<string | null>(null);
   const camera = useCamera();
   const aimRef = useRef<(() => Aim) | null>(null);
+
+  // 완료 화면에서 가입을 권할지 (가입 없이 다 써 본 다음에)
+  const { user } = useCurrentUser();
+  const [justJoined, setJustJoined] = useState(false);
 
   // ── 현장 확인 (decisions 3-B): 휴대폰 안에서만 거리 비교 ──
   const location = useLocation();
@@ -217,6 +222,7 @@ export function WriteFlow({ place }: { place: Place }) {
           photoUrl={photo ? URL.createObjectURL(photo) : null}
           mine
         />
+        {user && (user.is_anonymous || justJoined) && <SignupCard context="done" onDone={() => setJustJoined(true)} />}
         <div className="flex flex-col gap-3">
           <ButtonLink href={`/p/${place.slug}/view`}>남겨진 마음 보러 가기</ButtonLink>
           <Button variant="secondary" onClick={share}>

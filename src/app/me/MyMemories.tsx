@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Orb } from "@/components/Orb";
+import { SignupCard } from "@/components/SignupCard";
 import { ThemeSetting } from "@/components/ThemeSetting";
-import { Button, ButtonLink } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { PageShell } from "@/components/ui/PageShell";
 import type { EmotionId } from "@/lib/emotions";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -76,75 +78,52 @@ export function MyMemories() {
       ))}
 
       <div className="mt-auto flex flex-col gap-6">
-        <ThemeSetting />
         {ready && <AccountBox />}
+        <ThemeSetting />
       </div>
     </PageShell>
   );
 }
 
-/** 익명 → 정식 계정 연결 (decisions 2-7) */
+/** 가입·로그인 상태 (decisions 2-7, 2-10) */
 function AccountBox() {
   const { user } = useCurrentUser();
-  const [email, setEmail] = useState("");
-  const [note, setNote] = useState<string | null>(null);
-  const supabase = supabaseBrowser();
-  const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/me` : undefined;
+  const [justJoined, setJustJoined] = useState(false);
 
   if (!user) return null;
 
-  if (!user.is_anonymous) {
-    const via = user.app_metadata?.provider === "kakao" ? "카카오" : user.email ?? "계정";
+  if (user.is_anonymous || justJoined) {
     return (
-      <section className="mt-auto flex flex-col gap-2 rounded-[var(--radius-md)] bg-surface-sunken p-4 text-sm">
-        <p>{via}로 연결되어 있어요. 다른 기기에서도 내 기억을 볼 수 있어요.</p>
-        <Button variant="ghost" onClick={() => supabase.auth.signOut().then(() => location.reload())}>
-          이 기기에서 나가기
-        </Button>
-      </section>
+      <div className="flex flex-col gap-4">
+        <SignupCard context="me" onDone={() => setJustJoined(true)} />
+        <Suspense fallback={null}>
+          <MovedNote />
+        </Suspense>
+      </div>
     );
   }
 
-  async function kakao() {
-    const { error } = await supabase.auth.linkIdentity({ provider: "kakao", options: { redirectTo } });
-    if (error) setNote("카카오 연결은 준비 중이에요. 이메일로 먼저 연결해 주세요.");
-  }
-
-  async function linkEmail(e: React.FormEvent) {
-    e.preventDefault();
-    const { error } = await supabase.auth.updateUser({ email }, { emailRedirectTo: redirectTo });
-    setNote(error ? "이 이메일은 쓸 수 없어요. 다른 주소로 해 볼까요?" : "메일함을 확인해 주세요. 링크를 누르면 연결돼요.");
-  }
-
+  const via = user.app_metadata?.provider === "kakao" ? "카카오" : user.email ?? "계정";
   return (
-    <section className="mt-auto flex flex-col gap-3 rounded-[var(--radius-md)] bg-surface-sunken p-4">
-      <p className="text-sm">
-        지금은 이 휴대폰에만 기억이 있어요. 계정을 연결하면 휴대폰을 바꿔도 그대로 볼 수 있어요.
-      </p>
-      <Button variant="accent" onClick={kakao}>
-        카카오로 연결하기
+    <section className="flex flex-col gap-2 rounded-[var(--radius-md)] bg-surface-sunken p-4 text-sm">
+      <Suspense fallback={null}>
+        <MovedNote />
+      </Suspense>
+      <p>{via}로 가입되어 있어요. 어느 휴대폰에서든 내 엽서를 볼 수 있어요.</p>
+      <Button variant="ghost" onClick={() => supabaseBrowser().auth.signOut().then(() => location.reload())}>
+        이 휴대폰에서 로그아웃
       </Button>
-      <form onSubmit={linkEmail} className="flex gap-2">
-        <label className="sr-only" htmlFor="email">
-          이메일
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="이메일로 연결"
-          className="min-h-12 min-w-0 flex-1 rounded-full border border-border bg-surface px-4 text-sm outline-none focus:border-text"
-        />
-        <Button type="submit" variant="secondary" className="px-4">
-          보내기
-        </Button>
-      </form>
-      {note && <p className="text-sm text-text-muted">{note}</p>}
-      <ButtonLink href="/me/login" variant="ghost">
-        이미 계정이 있어요
-      </ButtonLink>
     </section>
+  );
+}
+
+/** 로그인하면서 옮겨 온 마음 수 */
+function MovedNote() {
+  const moved = Number(useSearchParams().get("moved") ?? 0);
+  if (!moved) return null;
+  return (
+    <p className="rounded-[var(--radius-md)] border border-border bg-surface p-3 text-sm" role="status">
+      이 휴대폰에서 남긴 마음 {moved}개를 내 계정으로 옮겼어요.
+    </p>
   );
 }

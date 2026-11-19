@@ -69,7 +69,6 @@ export default function Home() {
 
       <footer className="mt-auto flex justify-between text-sm text-text-muted">
         <a href="/me">내 기억</a>
-        <a href="/admin">운영자</a>
       </footer>
     </PageShell>
   );

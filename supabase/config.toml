@@ -424,9 +424,16 @@ additional_redirect_urls = ["https://giok-walk.vercel.app/**"]
 
 # 운영은 Supabase 기본 보안값 유지 (로컬 개발용 느슨한 값을 올리지 않는다)
 [remotes.production.auth.email]
-enable_confirmations = true
+# 가입 즉시 계정이 된다 (decisions 2-10). 기본 메일 서버로는 확인 메일을 방문객에게 보낼 수 없어서 끈다.
+# 메일 발송 서비스(SMTP)를 붙이면 다시 켜고 비밀번호 재설정 메일도 쓴다.
+enable_confirmations = false
 max_frequency = "1m0s"
 otp_length = 8
+
+# 축제장 와이파이처럼 여러 방문객이 한 IP 를 쓰므로 가입·로그인 한도를 넉넉히 (기본 30 / 5분)
+[remotes.production.auth.rate_limit]
+sign_in_sign_ups = 150
+anonymous_users = 1000
 
 [remotes.production.auth.mfa.totp]
 enroll_enabled = true
