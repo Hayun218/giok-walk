@@ -5,7 +5,7 @@ import { brand } from "@/config/brand";
 import { EMOTIONS } from "@/lib/emotions";
 
 const STEPS = [
-  { title: "QR로 열어요", body: "행사장이나 장소에 있는 QR을 찍으면 바로 열려요. 따로 설치하지 않아요." },
+  { title: "그곳에서 열어요", body: "근처의 기억 장소를 찾거나, 장소에 있는 QR을 찍으면 바로 열려요. 따로 설치하지 않아요." },
   { title: "마음을 남겨요", body: "오늘 마음의 색을 고르고 짧은 편지를 써서, 카메라로 비춘 그 자리에 두어요." },
   { title: "다시 와서 만나요", body: "남긴 마음은 그 자리에 계속 쌓여요. 다시 찾아오면 그대로 있어요." },
 ];
@@ -32,7 +32,12 @@ export default function Home() {
         <p className="text-text-muted">
           {brand.name}은 장소에 마음을 남기는 서비스예요. 편지와 마음의 색이 구슬이 되어 그 자리에 남고, 다시 찾아오면 그대로 만날 수 있어요.
         </p>
-        <ButtonLink href="/p/demo">영일대 산책길에서 해 보기</ButtonLink>
+        <div className="flex flex-col gap-2">
+          <ButtonLink href="/nearby">근처의 기억 장소 찾기</ButtonLink>
+          <ButtonLink href="/p/demo" variant="secondary">
+            영일대 산책길에서 해 보기
+          </ButtonLink>
+        </div>
       </section>
 
       <section className="flex flex-col gap-4">

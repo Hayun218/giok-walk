@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { passPresence } from "./helpers";
 
 const PLACE = process.env.E2E_PLACE ?? "e2e";
 const PLACE_NAME = PLACE === "demo" ? "영일대 산책길" : "테스트 산책길";
@@ -16,6 +17,7 @@ test("QR 로 들어와 마음을 남기고, 다시 오면 내 마음이 그대�
   await page.goto(`/p/${PLACE}`);
   await expect(page.getByRole("heading", { name: PLACE_NAME })).toBeVisible();
   await page.getByRole("link", { name: "마음 남기기" }).click();
+  await passPresence(page);
 
   // 2. 기록 작성
   await page.getByRole("radio", { name: "평온" }).click();
@@ -56,6 +58,7 @@ test("다른 사람이 남긴 공개 마음은 보이고, 신고할 수 있다",
   const letter = `같이 걸어서 좋았다 ${Date.now()}`;
   const author = await browser.newPage();
   await author.goto(`/p/${PLACE}/write`);
+  await passPresence(author);
   await author.getByRole("radio", { name: "기쁨" }).click();
   await author.getByRole("button", { name: "다음" }).click();
   await author.getByRole("button", { name: "다음" }).click();

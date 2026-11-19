@@ -78,7 +78,12 @@ export function PlaceHome({ place }: { place: Place }) {
 
       <div className="mt-auto flex flex-col gap-3">
         {open ? (
-          <ButtonLink href={`/p/${place.slug}/write`}>마음 남기기</ButtonLink>
+          <>
+            <ButtonLink href={`/p/${place.slug}/write`}>마음 남기기</ButtonLink>
+            {place.presence_required && place.lat != null && (
+              <p className="text-center text-xs text-text-muted">이 장소 반경 {place.radius_m}m 안에서 남길 수 있어요</p>
+            )}
+          </>
         ) : (
           <p className="rounded-[var(--radius-md)] bg-surface-sunken p-4 text-center text-sm text-text-muted">
             지금은 마음을 남길 수 없는 때예요. 남겨진 마음은 볼 수 있어요.

@@ -13,7 +13,10 @@ import { useCamera } from "@/components/scene/useCamera";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { PageShell } from "@/components/ui/PageShell";
 import type { EmotionId } from "@/lib/emotions";
+import { LocationConsent } from "@/components/LocationConsent";
 import { anchorSlot } from "@/lib/anchor";
+import { bearingDeg, distanceM, formatDistance, isWithin, placeLatLng } from "@/lib/geo";
+import { useLocation } from "@/lib/useLocation";
 import { preparePhoto } from "@/lib/image";
 import { pickDistance } from "@/lib/placement";
 import { shareMemory } from "@/lib/share";
@@ -49,6 +52,17 @@ export function WriteFlow({ place }: { place: Place }) {
   const [shareNote, setShareNote] = useState<string | null>(null);
   const camera = useCamera();
   const aimRef = useRef<(() => Aim) | null>(null);
+
+  // ── 현장 확인 (decisions 3-B): 휴대폰 안에서만 거리 비교 ──
+  const location = useLocation();
+  const placeAt = placeLatLng(place);
+  const needsPresence = place.presence_required && placeAt != null;
+  const fix = location.state.status === "ok" ? location.state.fix : null;
+  const within = !needsPresence || (fix != null && isWithin(fix, placeAt!, place.radius_m));
+  const [unlocked, setUnlocked] = useState(false);
+  if (within && !unlocked) setUnlocked(true); // 한 번 확인되면 쓰는 동안은 열어 둔다
+  // QR 이 없을 때 구슬을 띄울 방향: 장소가 있는 쪽 (가까우면 방향이 흔들리므로 15m 이상일 때만)
+  const placeBearing = fix && placeAt && distanceM(fix, placeAt) > 15 ? bearingDeg(fix, placeAt) : undefined;
 
   const stepIndex = FORM_STEPS.indexOf(step);
   const back = () => setStep(FORM_STEPS[Math.max(0, stepIndex - 1)]);
@@ -119,6 +133,29 @@ export function WriteFlow({ place }: { place: Place }) {
     setShareNote(result === "copied" ? "링크를 복사했어요. 보내고 싶은 곳에 붙여 넣어 주세요." : null);
   }
 
+  // ── 현장 확인 전 ───────────────────────────────
+  if (!unlocked && step !== "done") {
+    const away = fix && placeAt ? distanceM(fix, placeAt) : null;
+    return (
+      <PageShell back={{ href: `/p/${place.slug}`, label: place.name }} className="gap-5 pt-4">
+        <h1 className="text-xl">그 자리에서 남길 수 있어요</h1>
+        <p className="text-text-muted">
+          {place.name}
+          {place.venue_name ? ` (${place.venue_name})` : ""} 반경 {place.radius_m}m 안에서 마음을 남길 수 있어요.
+        </p>
+        <LocationConsent state={location.state} onAllow={location.start} purpose="here" />
+        {away != null && (
+          <p className="rounded-[var(--radius-md)] border border-border bg-surface p-4 text-sm" data-testid="presence-away">
+            지금은 {formatDistance(away)} 떨어져 있어요. 가까이 가면 남길 수 있어요.
+          </p>
+        )}
+        <ButtonLink href={`/p/${place.slug}/view`} variant="secondary" className="mt-auto">
+          남겨진 마음 보기
+        </ButtonLink>
+      </PageShell>
+    );
+  }
+
   // ── 남기기: 카메라(또는 그림) 위에 놓기 ───────────
   if (step === "place" && emotion) {
     const ready = camera.choice !== "undecided";
@@ -135,6 +172,7 @@ export function WriteFlow({ place }: { place: Place }) {
             placeSlug={place.slug}
             placeName={place.name}
             anchorSize={place.anchor_size_m}
+            placeBearing={placeBearing}
             aimRef={aimRef}
             onUsePicture={camera.usePicture}
           />

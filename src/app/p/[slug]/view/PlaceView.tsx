@@ -10,6 +10,8 @@ import { useCamera } from "@/components/scene/useCamera";
 import { sceneChip } from "@/components/scene/chip";
 import { ButtonLink } from "@/components/ui/Button";
 import { anchorSlot } from "@/lib/anchor";
+import { bearingDeg, distanceM, placeLatLng } from "@/lib/geo";
+import { useLocation } from "@/lib/useLocation";
 import { emotionLabel, type EmotionId } from "@/lib/emotions";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { recipientLabel, stampDate, type Memory, type Place } from "@/lib/types";
@@ -25,6 +27,11 @@ export function PlaceView({ place }: { place: Place }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Memory | null>(null);
   const camera = useCamera();
+  // 이미 위치 사용을 허락했다면, QR 없이도 장소가 있는 쪽에 구슬을 띄운다 (따로 묻지 않는다)
+  const location = useLocation();
+  const placeAt = placeLatLng(place);
+  const fix = location.state.status === "ok" ? location.state.fix : null;
+  const placeBearing = fix && placeAt && distanceM(fix, placeAt) > 15 ? bearingDeg(fix, placeAt) : undefined;
 
   useEffect(() => {
     let alive = true;
@@ -111,6 +118,7 @@ export function PlaceView({ place }: { place: Place }) {
             placeSlug={place.slug}
             placeName={place.name}
             anchorSize={place.anchor_size_m}
+            placeBearing={placeBearing}
             onSelect={(id) => setSelected(memories?.find((m) => m.id === id) ?? null)}
             onUsePicture={camera.usePicture}
           />

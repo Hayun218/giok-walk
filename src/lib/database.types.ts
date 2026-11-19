@@ -183,7 +183,9 @@ export type Database = {
           mode: Database["public"]["Enums"]["place_mode"]
           name: string
           object_kind: Database["public"]["Enums"]["object_kind"]
+          presence_required: boolean
           prompt: string | null
+          radius_m: number
           slug: string
           starts_at: string | null
           status: Database["public"]["Enums"]["place_status"]
@@ -202,7 +204,9 @@ export type Database = {
           mode?: Database["public"]["Enums"]["place_mode"]
           name: string
           object_kind?: Database["public"]["Enums"]["object_kind"]
+          presence_required?: boolean
           prompt?: string | null
+          radius_m?: number
           slug: string
           starts_at?: string | null
           status?: Database["public"]["Enums"]["place_status"]
@@ -221,7 +225,9 @@ export type Database = {
           mode?: Database["public"]["Enums"]["place_mode"]
           name?: string
           object_kind?: Database["public"]["Enums"]["object_kind"]
+          presence_required?: boolean
           prompt?: string | null
+          radius_m?: number
           slug?: string
           starts_at?: string | null
           status?: Database["public"]["Enums"]["place_status"]

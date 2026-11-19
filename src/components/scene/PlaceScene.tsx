@@ -42,11 +42,14 @@ export type SceneMemory = {
 
 export type Aim = { yaw: number; pitch: number };
 
-/** 포스터를 찾는 중 / 찾음 / 그림 위(가상의 포스터) */
-type AnchorState = "searching" | "found" | "virtual";
+/**
+ * free: 카메라 위, QR 없이 장소 쪽(또는 앞쪽)에 띄움 · found: QR 포스터에 정확히 고정 · virtual: 그림 위 가상의 포스터
+ */
+type AnchorState = "free" | "found" | "virtual";
 
 const ORB_SCALE = 0.22; // 구슬 지름 약 12cm
 const VIRTUAL_DISTANCE = 2.1; // 그림 위에서 가상 포스터까지 거리(m)
+const FREE_DISTANCE = 2.6; // 카메라 위, QR 없이 띄울 때 거리(m)
 
 function cssVar(name: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -100,7 +103,8 @@ function posterCardTexture(placeName: string) {
 
 /**
  * 장소 화면 (decisions 3-A)
- *  - 카메라: 이 장소의 QR 포스터를 찾으면, 포스터 기준으로 정해진 자리에 구슬이 뜬다.
+ *  - 카메라: 바로 구슬을 띄운다. 위치를 알면 장소가 있는 쪽, 모르면 앞쪽 (decisions 3-B).
+ *    이 장소의 QR 포스터를 찾으면, 포스터 기준으로 정해진 자리에 정확히 옮겨 붙는다 (3-A).
  *    포스터가 화면에서 벗어나도 휴대폰 방향 센서로 그 자리를 유지하고, 다시 비추면 더 정확히 맞춘다.
  *  - 그림 위: 앞쪽에 가상의 포스터를 두고 같은 배치로 보여 준다. 손가락·마우스로 끌어서 둘러본다.
  *  - mode="place" 이면 이번 기억이 놓일 자리(nextSlot)에 반짝이는 구슬을 보여 준다.
@@ -115,6 +119,7 @@ export default function PlaceScene({
   placeSlug,
   placeName,
   anchorSize,
+  placeBearing,
   aimRef,
   onSelect,
   onUsePicture,
@@ -129,6 +134,8 @@ export default function PlaceScene({
   placeName: string;
   /** 인쇄된 QR 한 변 길이(m) */
   anchorSize: number;
+  /** 지금 위치에서 장소가 있는 방향(북쪽 0°). 모르면 undefined → 앞쪽에 띄운다 */
+  placeBearing?: number;
   aimRef?: MutableRefObject<(() => Aim) | null>;
   onSelect?: (id: string) => void;
   onUsePicture?: () => void;
@@ -137,7 +144,7 @@ export default function PlaceScene({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [usingSensor, setUsingSensor] = useState(false);
   const withCamera = !!cameraStream;
-  const [anchorState, setAnchorState] = useState<AnchorState>(withCamera ? "searching" : "virtual");
+  const [anchorState, setAnchorState] = useState<AnchorState>(withCamera ? "free" : "virtual");
   const [lost, setLost] = useState(false);
   const [offscreen, setOffscreen] = useState({ left: 0, right: 0 });
   const memoriesRef = useRef(memories);
@@ -186,8 +193,10 @@ export default function PlaceScene({
 
     // ── 포스터 기준 묶음: 모든 구슬은 이 안에서 포스터 좌표로 놓인다 ──
     const anchor = new Group();
-    anchor.visible = !withCamera; // 카메라는 포스터를 찾은 뒤에 보인다
+    anchor.visible = false; // 자리를 정한 뒤에 보인다
     scene.add(anchor);
+    // QR 을 찾으면 보여 줄 테두리 (찾기 전엔 숨김)
+    let qrFrame: LineLoop | null = null;
 
     const disposables: { dispose: () => void }[] = [];
     if (withCamera) {
@@ -197,7 +206,9 @@ export default function PlaceScene({
         new BufferGeometry().setFromPoints([new Vector3(-s, s, 0), new Vector3(s, s, 0), new Vector3(s, -s, 0), new Vector3(-s, -s, 0)]),
         new LineBasicMaterial({ color: cssVar("--palette-coral") }),
       );
+      frame.visible = false;
       anchor.add(frame);
+      qrFrame = frame;
       disposables.push(frame.geometry, frame.material);
     } else {
       const tex = posterCardTexture(placeName);
@@ -300,6 +311,7 @@ export default function PlaceScene({
                   anchor.position.copy(targetPos);
                   anchor.quaternion.copy(targetQuat);
                   anchor.visible = true;
+                  if (qrFrame) qrFrame.visible = true;
                   found = true;
                   setAnchorState("found");
                 }
@@ -357,16 +369,24 @@ export default function PlaceScene({
     el.addEventListener("pointermove", onMove);
     el.addEventListener("pointerup", onUp);
 
-    // 그림 위: 처음 바라보는 방향 앞쪽에 가상의 포스터를 세운다
+    // QR 없이: 장소가 있는 방향(나침반을 쓸 수 있을 때) 또는 처음 바라보는 앞쪽에 자리를 세운다
     let virtualPlaced = false;
     const placeVirtual = () => {
       const fwd = new Vector3();
-      camera.getWorldDirection(fwd);
-      fwd.y = 0;
-      if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1);
-      fwd.normalize();
-      anchor.position.copy(fwd.clone().multiplyScalar(VIRTUAL_DISTANCE)).add(new Vector3(0, -0.2, 0));
+      if (placeBearing != null && sensor?.absolute) {
+        // 세계 좌표: 북 = -Z, 동 = +X
+        const b = (placeBearing * Math.PI) / 180;
+        fwd.set(Math.sin(b), 0, -Math.cos(b));
+      } else {
+        camera.getWorldDirection(fwd);
+        fwd.y = 0;
+        if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1);
+        fwd.normalize();
+      }
+      const dist = withCamera ? FREE_DISTANCE : VIRTUAL_DISTANCE;
+      anchor.position.copy(fwd.clone().multiplyScalar(dist)).add(new Vector3(0, withCamera ? 0.1 : -0.2, 0));
       anchor.quaternion.setFromUnitVectors(new Vector3(0, 0, 1), fwd.clone().negate());
+      anchor.visible = true;
       virtualPlaced = true;
     };
 
@@ -391,7 +411,7 @@ export default function PlaceScene({
       } else if (!withCamera) {
         camera.rotation.set((dragPitch * Math.PI) / 180, (-dragYaw * Math.PI) / 180, 0);
       }
-      if (!withCamera && !virtualPlaced && (sensor || t > 0.6)) placeVirtual();
+      if (!found && !virtualPlaced && (sensor || t > 0.6)) placeVirtual();
       // 포스터를 다시 찾으면 부드럽게 맞춘다
       if (withCamera && found) {
         anchor.position.lerp(targetPos, 0.3);
@@ -444,7 +464,7 @@ export default function PlaceScene({
     };
     // 화면 모드·카메라 사용 여부가 바뀌면 새로 만든다. 기억 목록 변경은 syncSprites 가 처리한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, objectKind, ghostEmotion, aimRef, withCamera, placeSlug, anchorSize]);
+  }, [mode, objectKind, ghostEmotion, aimRef, withCamera, placeSlug, anchorSize, placeBearing != null]);
 
   return (
     <div
@@ -467,13 +487,14 @@ export default function PlaceScene({
       )}
       <div ref={mountRef} className="absolute inset-0" />
 
-      {withCamera && anchorState === "searching" && (
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4">
-          <div className="size-52 rounded-[var(--radius-lg)] border-2 border-dashed border-on-scene opacity-80" />
-          <p className={`text-sm text-on-scene ${sceneChip}`}>이곳의 QR 포스터를 네모 안에 비춰 주세요</p>
+      {withCamera && anchorState === "free" && (
+        <div className="pointer-events-none absolute inset-x-0 top-28 flex flex-col items-center gap-2 px-5">
+          <p className={`text-center text-xs text-on-scene ${sceneChip}`} data-testid="qr-hint">
+            QR 포스터가 있다면 비춰 보세요. 구슬이 제자리로 옮겨 가요
+          </p>
           {onUsePicture && (
-            <button type="button" onClick={onUsePicture} className={`pointer-events-auto text-sm text-on-scene underline-offset-4 hover:underline ${sceneChip}`}>
-              포스터 없이 볼게요
+            <button type="button" onClick={onUsePicture} className={`pointer-events-auto text-xs text-on-scene underline-offset-4 hover:underline ${sceneChip}`}>
+              카메라 끄고 보기
             </button>
           )}
         </div>
@@ -484,12 +505,12 @@ export default function PlaceScene({
         </p>
       )}
 
-      {mode === "view" && anchorState !== "searching" && offscreen.left > 0 && (
+      {mode === "view" && offscreen.left > 0 && (
         <span className={`pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-on-scene ${sceneChip}`} data-testid="hint-left">
           ← {offscreen.left}
         </span>
       )}
-      {mode === "view" && anchorState !== "searching" && offscreen.right > 0 && (
+      {mode === "view" && offscreen.right > 0 && (
         <span className={`pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-on-scene ${sceneChip}`} data-testid="hint-right">
           {offscreen.right} →
         </span>

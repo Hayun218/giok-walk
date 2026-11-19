@@ -20,17 +20,19 @@ export default defineConfig({
     // 배포본 점검: E2E_BASE_URL=https://giok-walk.vercel.app E2E_PLACE=demo pnpm test:e2e -g "QR 로"
     baseURL: process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`,
     locale: "ko-KR",
+    // 테스트 장소(/p/e2e, 서울시청) 바로 옆에 있다고 가정
+    geolocation: { latitude: 37.5666, longitude: 126.9781 },
     timezoneId: "Asia/Seoul",
     trace: "on-first-retry",
   },
   projects: [
-    { name: "iphone", testIgnore: /qr-anchor/, use: { ...devices["iPhone 15"] } },
+    { name: "iphone", testIgnore: /qr-anchor/, use: { ...devices["iPhone 15"], permissions: ["geolocation"] } },
     {
       name: "android",
       testIgnore: /qr-anchor/,
       use: {
         ...devices["Pixel 7"],
-        permissions: ["camera"],
+        permissions: ["camera", "geolocation"],
         launchOptions: {
           args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
         },
@@ -42,7 +44,7 @@ export default defineConfig({
       testMatch: /qr-anchor/,
       use: {
         ...devices["Pixel 7"],
-        permissions: ["camera"],
+        permissions: ["camera", "geolocation"],
         launchOptions: {
           args: [
             "--use-fake-ui-for-media-stream",

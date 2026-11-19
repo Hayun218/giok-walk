@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { passPresence } from "./helpers";
 
 /**
  * 휴대폰 규격 + 다크 모드 점검
@@ -65,5 +66,6 @@ test("휴대폰 설정을 고르면 휴대폰의 라이트·다크를 따른다"
 test("쓰기 화면의 다음 버튼은 작은 폰에서도 스크롤 없이 보인다", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto("/p/e2e/write");
+  await passPresence(page);
   await expect(page.getByRole("button", { name: "다음" })).toBeInViewport();
 });
